@@ -158,7 +158,7 @@ class GroundedGenerator:
             return self._synthesize_fallback(user_prompt, [])
 
     def _synthesize_fallback(self, question: str, retrieved_chunks: List[Tuple[Chunk, float]]) -> str:
-        """Compact, minimal-line synthesis without redundant bold asterisks or paragraph dumps."""
+        """Compact, minimal-line synthesis with complete, untruncated sentences."""
         if not retrieved_chunks:
             return "The retrieved documents do not contain enough information to answer this question."
 
@@ -179,19 +179,20 @@ class GroundedGenerator:
             pg = c.metadata.page_number
             
             cleaned = clean_line(c.content)
-            # Take key resolution sentences (up to ~160 chars)
+            # Extract complete sentences cleanly without truncation
             sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', cleaned) if s.strip()]
-            summary_text = " ".join(sentences[:2]) if sentences else cleaned
-            if len(summary_text) > 170:
-                summary_text = summary_text[:165] + "..."
+            if sentences:
+                summary_text = sentences[0]
+                if len(sentences) > 1 and len(summary_text) < 120:
+                    summary_text += " " + sentences[1]
+            else:
+                summary_text = cleaned
 
             bullet_lines.append(f"• {summary_text} {ref}")
             source_refs.append(f"{doc_name} (p.{pg})")
 
         sources_str = ", ".join(source_refs)
         return "\n".join(bullet_lines) + f"\n\nSources: {sources_str}"
-
-        return "\n".join(lines)
 
 
 generator = GroundedGenerator()
