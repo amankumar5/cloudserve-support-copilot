@@ -1,0 +1,60 @@
+[
+  {
+    "id": "eval_01",
+    "category": "table",
+    "question": "Which product had the highest revenue?",
+    "expected_answer": "Product B had the highest revenue of $15M.",
+    "expected_sources": [
+      {"file_name": "financial_report.pdf", "page_number": 1}
+    ],
+    "is_unanswerable": false
+  },
+  {
+    "id": "eval_02",
+    "category": "table",
+    "question": "What was the growth rate of Product B?",
+    "expected_answer": "The growth rate of Product B was 18%.",
+    "expected_sources": [
+      {"file_name": "financial_report.pdf", "page_number": 1}
+    ],
+    "is_unanswerable": false
+  },
+  {
+    "id": "eval_03",
+    "category": "diagram",
+    "question": "What services are involved in the payment flow?",
+    "expected_answer": "The payment flow involves User, API Gateway, Order Service, Payment Service, and Database.",
+    "expected_sources": [
+      {"file_name": "architecture.pdf", "page_number": 1}
+    ],
+    "is_unanswerable": false
+  },
+  {
+    "id": "eval_04",
+    "category": "text",
+    "question": "What are the common causes of invalid credential errors on login?",
+    "expected_answer": "Account locked after 5 consecutive failed attempts, stale session cookie, or old password cached by client.",
+    "expected_sources": [
+      {"file_name": "DOC-AUTH-001_resolving_invalid_credential_e.docx", "page_number": 1}
+    ],
+    "is_unanswerable": false
+  },
+  {
+    "id": "eval_05",
+    "category": "text",
+    "question": "How do you resolve container deployments failing during the health check phase?",
+    "expected_answer": "Confirm container listens on declared port, increase initial delay, compare environment variables, and inspect container logs from failed revision.",
+    "expected_sources": [
+      {"file_name": "DOC-DEPLOY-001_container_deployments_failing_.docx", "page_number": 1}
+    ],
+    "is_unanswerable": false
+  },
+  {
+    "id": "eval_06",
+    "category": "unanswerable",
+    "question": "What is the company's policy on remote work in 2030?",
+    "expected_answer": null,
+    "expected_sources": [],
+    "is_unanswerable": true
+  }
+]
