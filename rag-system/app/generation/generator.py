@@ -67,19 +67,18 @@ class GroundedGenerator:
 
         # 2. Build Grounded System Prompt
         system_prompt = (
-            "You are an expert, production-grade Support Copilot. Your highest priority is accuracy, clarity, and helpfulness.\n"
+            "You are a Support Copilot. Your highest priority is accuracy, brevity, and extreme clarity.\n"
             "STRICT RULES:\n"
             "1. Base your answer ONLY on the provided RETRIEVED DOCUMENT CONTEXT below.\n"
             "2. Do NOT use outside knowledge, assume unstated facts, or hallucinate.\n"
-            "3. Format your response to be clean, professional, and highly human-readable using bullet points, short paragraphs, and bold section labels.\n"
-            "4. Clearly cite your sources for every statement using inline reference tags like [1], [2].\n"
-            "5. If the retrieved context does NOT contain enough information to answer accurately, explicitly state: "
-            "'The retrieved documents do not contain enough information to answer this question.'\n\n"
+            "3. Format your response in a minimal number of concise single-line bullets (NO ** bold asterisks, NO multi-paragraph quote dumps).\n"
+            "4. Clearly cite your sources at the end of each bullet point using reference tags [1], [2].\n"
+            "5. If context is insufficient, state: 'The retrieved documents do not contain enough information to answer this question.'\n\n"
             f"RETRIEVED DOCUMENT CONTEXT:\n{full_context_str}\n"
         )
 
         # Build conversation prompt
-        user_prompt = f"Question: {question}\n\nPlease provide a clear, grounded, and human-readable answer with inline citations [1], [2]:"
+        user_prompt = f"Question: {question}\n\nPlease provide a concise, minimal-line answer with inline citations [1], [2]:"
 
         answer_text = ""
         # Validate API key format (Standard Google AI Studio keys start with 'AIzaSy')
@@ -159,34 +158,38 @@ class GroundedGenerator:
             return self._synthesize_fallback(user_prompt, [])
 
     def _synthesize_fallback(self, question: str, retrieved_chunks: List[Tuple[Chunk, float]]) -> str:
-        """Deterministic grounded fallback synthesis providing clean, executive, human-readable answers."""
+        """Compact, minimal-line synthesis without redundant bold asterisks or paragraph dumps."""
         if not retrieved_chunks:
             return "The retrieved documents do not contain enough information to answer this question."
 
         import re
 
-        def clean_text(raw: str) -> str:
-            cleaned = re.sub(r'#{1,6}\s*', '', raw)
+        def clean_line(text: str) -> str:
+            cleaned = re.sub(r'#{1,6}\s*', '', text)
+            cleaned = re.sub(r'\*+', '', cleaned)
             cleaned = re.sub(r'\s+', ' ', cleaned).strip()
             return cleaned
 
-        lines = ["Here is the verified resolution based on our technical documentation:\n"]
+        bullet_lines = []
+        source_refs = []
 
         for idx, (c, score) in enumerate(retrieved_chunks[:3]):
             ref = f"[{idx+1}]"
             doc_name = c.metadata.file_name
             pg = c.metadata.page_number
-            sec = c.metadata.section or "Technical Specs"
             
-            cleaned_snippet = clean_text(c.content)
-            if len(cleaned_snippet) > 280:
-                cleaned_snippet = cleaned_snippet[:280] + "..."
+            cleaned = clean_line(c.content)
+            # Take key resolution sentences (up to ~160 chars)
+            sentences = [s.strip() for s in re.split(r'(?<=[.ipython])\s+', cleaned) if s.strip()]
+            summary_text = " ".join(sentences[:2]) if sentences else cleaned
+            if len(summary_text) > 170:
+                summary_text = summary_text[:165] + "..."
 
-            lines.append(f"• **{sec}** ({doc_name}, Page {pg}) {ref}:")
-            lines.append(f"  \"{cleaned_snippet}\"\n")
+            bullet_lines.append(f"• {summary_text} {ref}")
+            source_refs.append(f"{doc_name} (p.{pg})")
 
-        sources_str = ", ".join([f"{c.metadata.file_name} (Page {c.metadata.page_number})" for c, _ in retrieved_chunks[:3]])
-        lines.append(f"📌 **Verified References:** {sources_str}")
+        sources_str = ", ".join(source_refs)
+        return "\n".join(bullet_lines) + f"\n\nSources: {sources_str}"
 
         return "\n".join(lines)
 
